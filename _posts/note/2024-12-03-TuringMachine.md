@@ -1,12 +1,13 @@
 ---
 title: "Turing Machine #0"
 date: 2024-12-03 20:20:00 +0800
-categories: [Note, Formal Languange & Automation, Turing Machine]
+categories: [Note, Formal Language & Automation, Turing Machine]
 tags: [computer science]     # TAG names should always be lowercase
 author: kyhsdjq
 description: Turing machine's definition and basic properties.
+media_subpath: /imgs/note
 math: true
-mermaid: true
+# mermaid: true
 ---
 
 ## 前言
@@ -27,6 +28,8 @@ mermaid: true
 
 在每个瞬间，图灵机都是一条无限长的纸带，上面扣着一个读写头。
 
+![turing machine](turing-machine-raw.svg){: w="700" }
+
 于是图灵机可以通过三个部分来描述：
 - 读写头状态
 - 读写头在纸带上的位置
@@ -36,6 +39,8 @@ mermaid: true
 - $$\alpha$$：纸带中在读写头左侧的符号（不包括读写头下的）
 - $$q$$：读写头状态
 - $$\beta$$：纸带在读写头右侧的符号（包括读写头下的）
+
+![turing machine ID](turing-machine-ID.svg){: w="700" }
 
 ### 状态转移
 
@@ -94,7 +99,7 @@ mermaid: true
 
 ### 自动机视角
 
-和先前（更简单的）自动机不同，图灵机把输入放在纸带上并自由地操作它们，因此它只能确认哪些输入被接受，而不一定能确认输入不被接受。
+和先前（更简单的）自动机不同，图灵机把输入放在纸带上并自由地操作它们，可能会不停地运行下去。因此它只能确认哪些输入被接受，而不一定能确认输入不被接受。
 
 > 停机问题：不存在统一的方法证明某个图灵机是否停机
 {: .prompt-info}
