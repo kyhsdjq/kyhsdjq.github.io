@@ -10,5 +10,6 @@ order: 4
 - AI Agent
 
 **TODO LIST**:
-- 第二篇博客：图灵机扩展
+- 图灵机的扩展（图片）
+- RE语言的性质
 - favicon替换为透明背景
