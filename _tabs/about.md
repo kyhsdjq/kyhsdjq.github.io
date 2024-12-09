@@ -10,5 +10,5 @@ order: 4
 - AI Agent
 
 **TODO LIST**:
-- RE语言的性质
+- 图片：RE语言的性质
 - favicon替换为透明背景
