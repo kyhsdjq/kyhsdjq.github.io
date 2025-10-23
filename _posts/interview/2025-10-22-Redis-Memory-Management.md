@@ -1,10 +1,10 @@
 ---
-title: "Redis Fundamentals"
+title: "Redis Memory Management"
 date: 2025-10-22 5:16:00 +0800
 categories: [Interview, Redis]
 tags: [computer science, redis, distributed system]     # TAG names should always be lowercase
 author: kyhsdjq
-description: Essential Redis concepts for developers.
+description: Comprehensive guide to Redis memory management, covering expiration policies, eviction strategies, LRU/LFU algorithms, and cache consistency solutions.
 media_subpath: /imgs/interview
 math: true
 mermaid: true
@@ -12,18 +12,22 @@ mermaid: true
 
 ## 前言
 
-全文参考 [小林coding - 图解Redis介绍](https://www.xiaolincoding.com/redis/)。
+本文将从 **内存持久化**、**内存清理**、**缓存崩溃**、**缓存一致性** 四个角度讨论 Redis 的内存管理。
 
-## 持久化
+本文参考 [小林coding - 图解Redis介绍](https://www.xiaolincoding.com/redis/)。
 
-持久化有三种方式：
+## 内存持久化
+
+redis 的数据都存储在 **内存** 中，从而实现高速读写。但为保障可靠性，我们需要将它持久化到 **磁盘** 中。
+
+redis 的内存持久化有三种方式：
 - **AOF 日志**：存储**命令**
 - **RDB 日志**：存储**内存状态**
 - 两者混合，RDB 日志负责存量、AOF 日志负责增量
 
 其中，AOF 日志的写回和 RDB 快照的存储都用到了**写时复制**：子进程和父进程共用页表。只有当父进程进行了写入时，被写入的页表才在子进程的虚拟地址空间中复制一份。
 
-## 内存管理
+## 内存清理
 
 要减少 Redis 对内存的占用，主要有两点：
 - **过期删除策略**：key 超过存活时长**被动**删除
@@ -114,7 +118,9 @@ Redis 的 LFU 实现已经考虑到了这个问题，采用了智能的计数策
    - 新加入的 key 会有一个初始计数值（通常是 5）
    - 作用：防止新key一进来就被淘汰
 
-## 三种崩溃
+## 缓存崩溃
+
+缓存崩溃主要有三种：
 
 ||现象|影响范围|核心解决思路|
 |:---|:---|:---|:---|
