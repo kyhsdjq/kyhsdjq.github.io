@@ -4,10 +4,16 @@ icon: fas fa-info-circle
 order: 4
 ---
 
-这是我的第一个博客网站，源仓库为 [kyhsdjq.github.io](https://github.com/kyhsdjq/kyhsdjq.github.io) ，备份仓库为 [blogs-backup](https://github.com/kyhsdjq/blogs-backup) 。
+这是我的第一个博客网站，源仓库为 [kyhsdjq.github.io](https://github.com/kyhsdjq/kyhsdjq.github.io)，备份仓库为 [blogs-backup](https://github.com/kyhsdjq/blogs-backup)。
 
 **INTERESTS**:
 - AI Agent
 
 **TODO LIST**:
-- favicon替换为透明背景
+- favicon 替换为透明背景
+- RAG
+- Redis 的发布者/订阅者机制
+- SillyTavern
+- Guava cache
+- DeepWiki
+- GitMcp
