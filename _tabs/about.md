@@ -11,9 +11,10 @@ order: 4
 
 **TODO LIST**:
 - favicon 替换为透明背景
-- RAG
-- Redis 的发布者/订阅者机制
 - SillyTavern
-- Guava cache
 - DeepWiki
 - GitMcp
+- RAG
+- raft
+- Redis 的发布者/订阅者机制
+- Guava cache

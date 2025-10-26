@@ -14,7 +14,7 @@ mermaid: true
 
 本文将从 **内存持久化**、**内存清理**、**缓存崩溃**、**缓存一致性** 四个角度讨论 Redis 的内存管理。
 
-本文参考 [小林coding - 图解Redis介绍](https://www.xiaolincoding.com/redis/)。
+本文参考 [小林coding - 图解Redis介绍](https://www.xiaolincoding.com/redis/)，此外探讨了 [LFU 的冷启动问题](#lfu-的冷启动问题与解决方案) 以及 [消息队列重试机制的潜在问题](#消息队列重试机制)。
 
 ## 内存持久化
 
@@ -37,11 +37,11 @@ redis 的内存持久化有三种方式：
 
 #### 三种过期删除策略
 
-||做法|优点|缺点|
-|:---|:---|:---|:---|
-|**定时删除**|创建定时事件来删除key|及时删除|占用CPU|
-|**惰性删除**|只在访问时删除|CPU时间友好|内存不友好|
-|**定期删除**|随机取出一定数量key检查|既不占用CPU，又不占用内存|效果折中，但难以确定检查频率|
+|              | 做法                    | 优点                      | 缺点                         |
+| :----------- | :---------------------- | :------------------------ | :--------------------------- |
+| **定时删除** | 创建定时事件来删除key   | 及时删除                  | 占用CPU                      |
+| **惰性删除** | 只在访问时删除          | CPU时间友好               | 内存不友好                   |
+| **定期删除** | 随机取出一定数量key检查 | 既不占用CPU，又不占用内存 | 效果折中，但难以确定检查频率 |
 
 #### Redis 过期策略
 
@@ -88,11 +88,11 @@ noeviction 不会淘汰数据，而是禁止写入。
 
 从 LRU 到近似 LRU 再到近似 LFU，参考 [文档](https://redis.ac.cn/docs/latest/develop/reference/eviction/?utm_source=openai)
 
-||策略|实现|缺点|
-|:---|:---|:---|:---|
-|**LRU**|最久未使用|惰性链表|链表空间开销<br>更新时链表修改耗时|
-|**近似 LRU**|近似最久未使用|添加字段记录最后一次访问时间<br>每次随机取5个值，淘汰最久未使用的|缓存污染<br>（只读取一次的数据也存在很久）|
-|**近似 LFU**|最少使用|添加字段记录访问频次<br>访问频次随时间衰减<br>同样随机选取|新key冷启动问题（已解决）|
+|              | 策略           | 实现                                                              | 缺点                                       |
+| :----------- | :------------- | :---------------------------------------------------------------- | :----------------------------------------- |
+| **LRU**      | 最久未使用     | 惰性链表                                                          | 链表空间开销<br>更新时链表修改耗时         |
+| **近似 LRU** | 近似最久未使用 | 添加字段记录最后一次访问时间<br>每次随机取5个值，淘汰最久未使用的 | 缓存污染<br>（只读取一次的数据也存在很久） |
+| **近似 LFU** | 最少使用       | 添加字段记录访问频次<br>访问频次随时间衰减<br>同样随机选取        | 新key冷启动问题（已解决）                  |
 
 #### LFU 的冷启动问题与解决方案
 
@@ -122,11 +122,11 @@ Redis 的 LFU 实现已经考虑到了这个问题，采用了智能的计数策
 
 缓存崩溃主要有三种：
 
-||现象|影响范围|核心解决思路|
-|:---|:---|:---|:---|
-|**缓存雪崩**|大量key同时过期|影响面广|分散过期时间|
-|**缓存击穿**|单个热点key过期|影响单点|加锁重建|
-|**缓存穿透**|查询不存在的数据|可能影响全局|过滤无效请求|
+|              | 现象             | 影响范围     | 核心解决思路 |
+| :----------- | :--------------- | :----------- | :----------- |
+| **缓存雪崩** | 大量key同时过期  | 影响面广     | 分散过期时间 |
+| **缓存击穿** | 单个热点key过期  | 影响单点     | 加锁重建     |
+| **缓存穿透** | 查询不存在的数据 | 可能影响全局 | 过滤无效请求 |
 
 ### 缓存雪崩
 
@@ -186,14 +186,14 @@ Redis 的 LFU 实现已经考虑到了这个问题，采用了智能的计数策
 
 线程 <span style="color:red">A</span> 和 <span style="color:blue">B</span> 都更新数据
 
-|行为|数据库中的值|缓存中的值|
-|:---|:---|:---|
-|初始情况|O|O|
-|<span style="color:red">线程 A 更新数据库</span>|<span style="color:red">O $$\rightarrow$$ A</span>|O|
-|<span style="color:blue">线程 B 更新数据库</span>|<span style="color:blue">A $$\rightarrow$$ B</span>|O|
-|<span style="color:blue">线程 B 更新缓存</span>|<span style="color:blue">B</span>|<span style="color:blue">O $$\rightarrow$$ B</span>|
-|<span style="color:red">线程 A 更新缓存</span>|<span style="color:blue">B</span>|<span style="color:red">B $$\rightarrow$$ A</span>|
-|最终情况|<span style="color:blue">B</span>|<span style="color:red">A</span>|
+| 行为                                              | 数据库中的值                                        | 缓存中的值                                          |
+| :------------------------------------------------ | :-------------------------------------------------- | :-------------------------------------------------- |
+| 初始情况                                          | O                                                   | O                                                   |
+| <span style="color:red">线程 A 更新数据库</span>  | <span style="color:red">O $$\rightarrow$$ A</span>  | O                                                   |
+| <span style="color:blue">线程 B 更新数据库</span> | <span style="color:blue">A $$\rightarrow$$ B</span> | O                                                   |
+| <span style="color:blue">线程 B 更新缓存</span>   | <span style="color:blue">B</span>                   | <span style="color:blue">O $$\rightarrow$$ B</span> |
+| <span style="color:red">线程 A 更新缓存</span>    | <span style="color:blue">B</span>                   | <span style="color:red">B $$\rightarrow$$ A</span>  |
+| 最终情况                                          | <span style="color:blue">B</span>                   | <span style="color:red">A</span>                    |
 
 > 要解决这个问题有两种方式：
 > - 修改前获取 **分布式锁**（影响性能）
@@ -204,27 +204,27 @@ Redis 的 LFU 实现已经考虑到了这个问题，采用了智能的计数策
 
 线程 <span style="color:red">A</span> 和 <span style="color:blue">B</span> 都更新数据
 
-|行为|数据库中的值|缓存中的值|
-|:---|:---|:---|
-|初始情况|O|O|
-|<span style="color:red">线程 A 更新缓存</span>|O|<span style="color:red">O $$\rightarrow$$ A</span>|
-|<span style="color:blue">线程 B 更新缓存</span>|O|<span style="color:blue">A $$\rightarrow$$ B</span>|
-|<span style="color:blue">线程 B 更新数据库</span>|<span style="color:blue">O $$\rightarrow$$ B</span>|<span style="color:blue">B</span>|
-|<span style="color:red">线程 A 更新数据库</span>|<span style="color:red">B $$\rightarrow$$ A</span>|<span style="color:blue">B</span>|
-|最终情况|<span style="color:red">A</span>|<span style="color:blue">B</span>|
+| 行为                                              | 数据库中的值                                        | 缓存中的值                                          |
+| :------------------------------------------------ | :-------------------------------------------------- | :-------------------------------------------------- |
+| 初始情况                                          | O                                                   | O                                                   |
+| <span style="color:red">线程 A 更新缓存</span>    | O                                                   | <span style="color:red">O $$\rightarrow$$ A</span>  |
+| <span style="color:blue">线程 B 更新缓存</span>   | O                                                   | <span style="color:blue">A $$\rightarrow$$ B</span> |
+| <span style="color:blue">线程 B 更新数据库</span> | <span style="color:blue">O $$\rightarrow$$ B</span> | <span style="color:blue">B</span>                   |
+| <span style="color:red">线程 A 更新数据库</span>  | <span style="color:red">B $$\rightarrow$$ A</span>  | <span style="color:blue">B</span>                   |
+| 最终情况                                          | <span style="color:red">A</span>                    | <span style="color:blue">B</span>                   |
 
 #### 先删缓存，再写数据库
 
 线程 <span style="color:red">A</span> 更新数据，线程 <span style="color:blue">B</span> 读取数据
 
-|行为|数据库中的值|缓存中的值|
-|:---|:---|:---|
-|初始情况|O|O|
-|<span style="color:red">线程 A 删除缓存</span>|O|<span style="color:red">O $$\rightarrow$$ nil</span>|
-|<span style="color:blue">线程 B 读取数据库得到 O</span>|O|<span style="color:red">nil</span>|
-|<span style="color:blue">线程 B 写回缓存</span>|O|<span style="color:blue">nil $$\rightarrow$$ O</span>|
-|<span style="color:red">线程 A 更新数据库</span>|<span style="color:red">O $$\rightarrow$$ A</span>|<span style="color:blue">O</span>|
-|最终情况|<span style="color:red">A</span>|<span style="color:blue">O</span>|
+| 行为                                                    | 数据库中的值                                       | 缓存中的值                                            |
+| :------------------------------------------------------ | :------------------------------------------------- | :---------------------------------------------------- |
+| 初始情况                                                | O                                                  | O                                                     |
+| <span style="color:red">线程 A 删除缓存</span>          | O                                                  | <span style="color:red">O $$\rightarrow$$ nil</span>  |
+| <span style="color:blue">线程 B 读取数据库得到 O</span> | O                                                  | <span style="color:red">nil</span>                    |
+| <span style="color:blue">线程 B 写回缓存</span>         | O                                                  | <span style="color:blue">nil $$\rightarrow$$ O</span> |
+| <span style="color:red">线程 A 更新数据库</span>        | <span style="color:red">O $$\rightarrow$$ A</span> | <span style="color:blue">O</span>                     |
+| 最终情况                                                | <span style="color:red">A</span>                   | <span style="color:blue">O</span>                     |
 
 > 可以通过 **延迟双删** 的方式解决：在写数据库后，睡眠一定时间再次删除缓存（时间需自行调整）
 {: .prompt-info }
@@ -233,14 +233,14 @@ Redis 的 LFU 实现已经考虑到了这个问题，采用了智能的计数策
 
 线程 <span style="color:red">A</span> 读取数据，线程 <span style="color:blue">B</span> 更新数据
 
-|行为|数据库中的值|缓存中的值|
-|:---|:---|:---|
-|初始情况|O|O|
-|<span style="color:red">线程 A 读取数据库得到 O</span>|O|O|
-|<span style="color:blue">线程 B 更新数据库</span>|<span style="color:blue">O $$\rightarrow$$ B</span>|O|
-|<span style="color:blue">线程 B 删除缓存</span>|<span style="color:blue">B</span>|<span style="color:blue">O $$\rightarrow$$ nil</span>|
-|<span style="color:red">线程 A 写回缓存</span>|<span style="color:blue">B</span>|<span style="color:red">nil $$\rightarrow$$ O</span>|
-|最终情况|<span style="color:blue">B</span>|<span style="color:red">O</span>|
+| 行为                                                   | 数据库中的值                                        | 缓存中的值                                            |
+| :----------------------------------------------------- | :-------------------------------------------------- | :---------------------------------------------------- |
+| 初始情况                                               | O                                                   | O                                                     |
+| <span style="color:red">线程 A 读取数据库得到 O</span> | O                                                   | O                                                     |
+| <span style="color:blue">线程 B 更新数据库</span>      | <span style="color:blue">O $$\rightarrow$$ B</span> | O                                                     |
+| <span style="color:blue">线程 B 删除缓存</span>        | <span style="color:blue">B</span>                   | <span style="color:blue">O $$\rightarrow$$ nil</span> |
+| <span style="color:red">线程 A 写回缓存</span>         | <span style="color:blue">B</span>                   | <span style="color:red">nil $$\rightarrow$$ O</span>  |
+| 最终情况                                               | <span style="color:blue">B</span>                   | <span style="color:red">O</span>                      |
 
 这种情况极少出现，因为缓存写入远快于数据库写入。
 
@@ -277,14 +277,14 @@ Redis 的 LFU 实现已经考虑到了这个问题，采用了智能的计数策
 **潜在问题**：
 消息队列的异步特性会导致缓存删除延迟，在延迟期间可能出现数据不一致：
 
-|行为|数据库中的值|缓存中的值|
-|:---|:---|:---|
-|初始情况|O|O|
-|<span style="color:red">线程 A 读取数据库得到 O</span>|O|O|
-|<span style="color:blue">线程 B 更新数据库</span>|<span style="color:blue">O $$\rightarrow$$ B</span>|O|
-|<span style="color:blue">线程 B 删除缓存</span>|<span style="color:blue">B</span>|<span style="color:blue">O $$\rightarrow$$ nil</span>|
-|<span style="color:red">线程 A 写回缓存</span>|<span style="color:blue">B</span>|<span style="color:red">nil $$\rightarrow$$ O</span>|
-|最终情况|<span style="color:blue">B</span>|<span style="color:red">O</span>|
+| 行为                                                   | 数据库中的值                                        | 缓存中的值                                            |
+| :----------------------------------------------------- | :-------------------------------------------------- | :---------------------------------------------------- |
+| 初始情况                                               | O                                                   | O                                                     |
+| <span style="color:red">线程 A 读取数据库得到 O</span> | O                                                   | O                                                     |
+| <span style="color:blue">线程 B 更新数据库</span>      | <span style="color:blue">O $$\rightarrow$$ B</span> | O                                                     |
+| <span style="color:blue">线程 B 删除缓存</span>        | <span style="color:blue">B</span>                   | <span style="color:blue">O $$\rightarrow$$ nil</span> |
+| <span style="color:red">线程 A 写回缓存</span>         | <span style="color:blue">B</span>                   | <span style="color:red">nil $$\rightarrow$$ O</span>  |
+| 最终情况                                               | <span style="color:blue">B</span>                   | <span style="color:red">O</span>                      |
 
 先前我们提到：这种情况极少出现，因为缓存写入远快于数据库写入；但是因为缓存删除的延迟，发生的概率大大提升。
 
