@@ -4,7 +4,7 @@ date: 2025-10-24 1:59:00 +0800
 categories: [Interview, Redis]
 tags: [computer science, redis, distributed system]     # TAG names should always be lowercase
 author: kyhsdjq
-description: Comprehensive guide to Redis memory management, covering expiration policies, eviction strategies, LRU/LFU algorithms, and cache consistency solutions.
+description: A Comprehensive Guide to Master-Slave Replication and Cluster Architecture.
 media_subpath: /imgs/interview
 math: true
 mermaid: true
