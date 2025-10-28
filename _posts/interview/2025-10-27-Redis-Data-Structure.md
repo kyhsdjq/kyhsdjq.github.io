@@ -203,11 +203,374 @@ flowchart TD
 
 ### 整数集合
 
-**TBD**
+**整数集合** 也类似数组，并且每个元素的大小相同。它的结构：
+
+| 字段       | 含义     |
+| :--------- | :------- |
+| encoding   | 编码方式 |
+| length     | 元素数量 |
+| contents[] | 数组     |
+
+encoding 和 contents[] 的对应关系：
+
+| encoding         | contents[] |
+| :--------------- | :--------- |
+| INTSET_ENC_INT16 | int16_t    |
+| INTSET_ENC_INT32 | int32_t    |
+| INTSET_ENC_INT64 | int64_t    |
+
+整数集合会根据插入元素的类型 **自动升级**，从而 **节省内存**，升级过程：
+1. 分配新空间
+2. 从后到前将原始元素移动到扩容后位置
+3. 添加导致自动升级的新元素
+
+```
+// 原始状态
+[100][200]
+
+// 插入 65540，分配新空间
+[100][200][----][----][----][----]
+
+// 开始移动
+[100][----][---200---][----][----]
+[---100---][---200---][----][----]
+
+// 插入新元素
+[---100---][---200---][--65540--]
+```
+
+### 跳表
+
+**跳表** 就是多层链表，通过多层快速定位链表节点。让我们来看看 redis 的跳表节点设计：
+
+| 字段     | 含义             |
+| :------- | :--------------- |
+| ele      | 元素（SDS 类型） |
+| score    | 权重，排序依据   |
+| backward | 后向指针         |
+| level[]  | 每层的属性       |
+
+其中 level 的结构：
+
+| 字段    | 含义                                     |
+| :------ | :--------------------------------------- |
+| forward | 前向指针                                 |
+| span    | 跨度，表示下一跳在 level0 跨越了多少节点 |
+
+**跳表结构示意图：**
+
+```
+Redis跳表结构 (Skip List Implementation)
+
+Level 3:  [Header] ───────────────────────────────────────────────────> [Tail]
+            │                                                            │
+            │                                                            │
+Level 2:  [Header] ──────> [Node1:10] ─────────────────> [Node3:30] ──> [Tail]
+            │                │                            │               │
+            │                │                            │               │
+Level 1:  [Header] ──────> [Node1:10] ──> [Node2:20] ──> [Node3:30] ──> [Tail]  
+            │                │              │              │               │
+            │                │              │              │               │
+Level 0:  [Header] ──────> [Node1:10] ──> [Node2:20] ──> [Node3:30] ──> [Node4:40] ──> [Tail]
+            │                │              │              │               │             │
+            └<───────────────┴<─────────────┴<─────────────┴<──────────────┴<────────────┘
+                          (backward指针，仅在Level 0)
+```
+
+此外，跳表整体结构中包含以下字段：
+
+| 字段   | 含义                          |
+| :----- | :---------------------------- |
+| header | 头节点                        |
+| tail   | 尾节点                        |
+| length | 跳表长度（level0 的元素个数） |
+| level  | 层级数                        |
+
+接下来看看跳表的几种操作。
+
+#### 查询
+
+跳表的查询过程是从最高层开始，逐层向下查找的过程。具体步骤如下：
+
+1. **从最高层的头节点开始**
+2. **水平遍历**：在当前层比较节点的权重（score），找到第一个权重大于目标权重的节点
+3. **向下跳跃**：跳到前一个节点的下一层继续查找
+4. **重复步骤2-3**，直到到达最底层（level 0）
+5. **最终定位**：在level 0进行最后的精确查找
+
+时间复杂度：$$O(\log n)$$
+
+#### 跳表层数设置
+
+Redis 跳表使用 **概率随机算法** 来决定新节点的层数，这是跳表数据结构的核心设计。
+
+**随机层数生成算法：**
+
+```c
+// 伪代码
+int randomLevel() {
+    int level = 1;
+    while (random() < 0.25 && level < SKIPLIST_MAXLEVEL) {
+        level++;
+    }
+    return level;
+}
+```
+
+**关键设计原理：**
+
+1. **$$p = \frac{1}{4}$$ 的选择**：
+   - 理论研究表明，$$p = \frac{1}{2}$$ 时性能最优
+   - Redis选择 $$p = \frac{1}{4}$$，在性能和内存之间取得平衡
+   - 更小的p值意味着更少的高层节点，节省内存
+
+2. **最大层数限制**：
+   - Redis设置 `SKIPLIST_MAXLEVEL = 32`
+   - 防止层数过高导致的内存浪费
+
+#### 跳表 vs 平衡树
+
+跳表的优势：
+- 配置灵活：可以通过修改概率来决定每层节点数，轻松达到 k 叉平衡树的效果
+- 范围查询：跳表天然支持范围查询，平衡树还需要维护一些别的信息
+- 算法简单：平衡树调整很复杂
+
+#### 跳表 vs B+ 树
+
+跳表和 B+ 树相似之处很多：叶子节点的双向链表、类多叉树。但是他们也有一些差别，最终导致 redis 和 innodb 选用了不同的数据结构。
+
+B+ 树比跳表 “重” 很多，当插入节点时，B+ 树仍旧需要多轮调整。但是，B+ 树对磁盘 IO 友好，并且一个非叶节点可以包含更多信息，层数更低，因此更适合数据库场景。
+
+### quicklist
+
+**quicklist** $$=$$ **双向链表** $$+$$ **压缩列表**
+
+思想：享受到 **压缩列表** 的快速读取优势，同时通过 **双向链表** 来控制单个 **压缩列表** 的大小，抑制 **连锁更新** 的影响。
+
+**双向链表** 中会保存 **压缩列表** 的字节大小和元素个数，从而快速判断插入当前列表中还是创建新的链表节点。
+
+### listpack
+
+**listpack** 是 **压缩列表** 的平替，因为不会存储前一项的长度，避免了 **连锁更新** 的问题。
+
+**listpack** 中每个 entry 的二进制存储结构为 `[编码字节(encoding)][数据(data)][反向长度(backlen)]`。
+
+> 源码中存在这样的片段，但只是为了方便数据处理，和 listpack 底层实现无关：
+> 
+> ```c
+> /* Each entry in the listpack is either a string or an integer. */
+> typedef struct {
+>     /* When string is used, it is provided with the length (slen). */
+>     unsigned char *sval;
+>     uint32_t slen;
+>     /* When integer is used, 'sval' is NULL, and lval holds the value. */
+>     long long lval;
+> } listpackEntry;
+>```
+{: .prompt-tip}
+
+#### 正向遍历
+
+首先我们需要计算出当前 entry 长度。
+
+已有 entry 首指针，我们可以通过 encoding 计算出 `encoding + data` 的长度，[源码](https://github.com/redis/redis/blob/8.4/src/listpack.c#L434) 如下：
+
+```c
+/* Return the encoded length of the listpack element pointed by 'p'.
+ * This includes the encoding byte, length bytes, and the element data itself.
+ * If the element encoding is wrong then 0 is returned.
+ * Note that this method may access additional bytes (in case of 12 and 32 bit
+ * str), so should only be called when we know 'p' was already validated by
+** * lpCurrentEncodedSizeBytes or ASSERT_INTEGRITY_LEN (possibly since 'p' is
+ * a return value of another function that validated its return. */
+static inline uint32_t lpCurrentEncodedSizeUnsafe(unsigned char *p) {
+    if (LP_ENCODING_IS_7BIT_UINT(p[0])) return 1;
+    if (LP_ENCODING_IS_6BIT_STR(p[0])) return 1+LP_ENCODING_6BIT_STR_LEN(p);
+    if (LP_ENCODING_IS_13BIT_INT(p[0])) return 2;
+    if (LP_ENCODING_IS_16BIT_INT(p[0])) return 3;
+    if (LP_ENCODING_IS_24BIT_INT(p[0])) return 4;
+    if (LP_ENCODING_IS_32BIT_INT(p[0])) return 5;
+    if (LP_ENCODING_IS_64BIT_INT(p[0])) return 9;
+    if (LP_ENCODING_IS_12BIT_STR(p[0])) return 2+LP_ENCODING_12BIT_STR_LEN(p);
+    if (LP_ENCODING_IS_32BIT_STR(p[0])) return 5+LP_ENCODING_32BIT_STR_LEN(p);
+    if (p[0] == LP_EOF) return 1;**
+    return 0;
+}
+```
+接着通过这个长度可以计算出 `backlen` 的长度（[源码](https://github.com/redis/redis/blob/8.4/src/listpack.c#L376)）：
+
+```c
+/* Calculate the number of bytes required to reverse-encode a variable length
+ * field representing the length of the previous element of size 'l', ranging
+ * from 1 to 5. */
+static inline unsigned long lpEncodeBacklenBytes(uint64_t l) {
+    if (l <= 127) {
+        return 1;
+    } else if (l < 16383) {
+        return 2;
+    } else if (l < 2097151) {
+        return 3;
+    } else if (l < 268435455) {
+        return 4;
+    } else {
+        return 5;
+    }
+}
+```
+
+最后，借助上面两个函数，实现从一个 entry 跳转到后继 entry 的函数（[源码](https://github.com/redis/redis/blob/8.4/src/listpack.c#L470)）：
+
+```c
+/* Skip the current entry returning the next. It is invalid to call this
+ * function if the current element is the EOF element at the end of the
+ * listpack, however, while this function is used to implement lpNext(),
+ * it does not return NULL when the EOF element is encountered. */
+static inline unsigned char *lpSkip(unsigned char *p) {
+    unsigned long entrylen = lpCurrentEncodedSizeUnsafe(p);
+    entrylen += lpEncodeBacklenBytes(entrylen);
+    p += entrylen;
+    return p;
+}
+```
+
+#### 反向遍历
+
+同样地，反向遍历也需要求出前一个 entry 的长度。
+
+我们已经把 prevlen 存在每一个 entry 的最后，redis 通过以下函数（输入指针指向 prevlen 的最后一个字节）还原出 prevlen 的长度（[源码](https://github.com/redis/redis/blob/8.4/src/listpack.c#L392)）：
+
+```c
+/* Decode the backlen and returns it. If the encoding looks invalid (more than
+ * 5 bytes are used), UINT64_MAX is returned to report the problem. */
+static inline uint64_t lpDecodeBacklen(unsigned char *p) {
+    uint64_t val = 0;
+    uint64_t shift = 0;
+    do {
+        val |= (uint64_t)(p[0] & 127) << shift;
+        if (!(p[0] & 128)) break;
+        shift += 7;
+        p--;
+        if (shift > 28) return UINT64_MAX;
+    } while(1);
+    return val;
+}
+```
+
+prevlen 采用 **Varint 编码规则** 来实现：**每个字节最高位是继续位**，如果为 `0` 表示这是最后一个字节，所以你可以看到 `if (!(p[0] & 128)) break;`；此外，通过 `shift` 来记录偏移量，地址越小，位数越高，每个字节值除了继续位，剩余 7 位为数值位，于是有 `shift += 7;`。
+
+于是，我们能实现从一个 entry 跳转到前驱 entry 的函数，注意 prevlen 不包含其本身的长度，所有还要通过 `lpEncodeBacklenBytes` 计算（[源码](https://github.com/redis/redis/blob/8.4/src/listpack.c#L500)）：
+```c
+/* If 'p' points to an element of the listpack, calling lpPrev() will return
+ * the pointer to the previous element (the one on the left), or NULL if 'p'
+ * already pointed to the first element of the listpack. */
+unsigned char *lpPrev(unsigned char *lp, unsigned char *p) {
+    assert(p);
+    if (p-lp == LP_HDR_SIZE) return NULL;
+    p--; /* Seek the first backlen byte of the last element. */
+    uint64_t prevlen = lpDecodeBacklen(p);
+    prevlen += lpEncodeBacklenBytes(prevlen);
+    p -= prevlen-1; /* Seek the first byte of the previous entry. */
+    lpAssertValidEntry(lp, lpBytes(lp), p);
+    return p;
+}
+```
+
+### 总结
+
+我们可以看到这些数据结构的思路差不多，做个整理：
+
+| 数据结构  | 直觉                | 简述                         |
+| :-------- | :------------------ | :--------------------------- |
+| SDS       | 动态数组            | 额外记录长度和申请空间大小   |
+| 链表      | 双向链表            | 通过 `void*` 兼容所有类型    |
+| 压缩列表  | 每项大小不同的数组  | 连锁更新问题                 |
+| 哈希表    | 数组 $$+$$ 链表     | 阻塞式 rehash、渐进式 rehash |
+| 整数集合  | 数组                | 自动升级                     |
+| 跳表      | 自动生长的多叉树    | 随即层数生成算法             |
+| quicklist | 双向链表 $$+$$ 数组 | 综合两者优势                 |
+| listpack  | 数组                | 优化压缩列表                 |
 
 ## 数据类型
 
-在说明特定数据类型前，让我们先看看 Redis 整体提供的 **键值对** 服务是如何实现的。
+### Redis 服务
+
+Redis 提供的 **键值对** 服务由 **哈希表** 实现，和上面说的相同，使用两张表，不过会稍微复杂一些。Redis 的键值对存储涉及多个层次的数据结构，形成了一个完整的存储体系。
+
+#### Redis 键值对存储架构
+
+```mermaid
+graph TD
+    subgraph "Redis Server"
+        RS["Redis Server"] --> DB0["redisDb 0"]
+        RS --> DBN["redisDb N"]
+    end
+    
+    subgraph "单个数据库结构 (redisDb)"
+        DB0 --> DICT["dict 字典"]
+        DB0 --> EXPIRES["dict 过期字典"]
+    end
+    
+    subgraph "字典结构 (dict)"
+        DICT --> HT0["dictht ht0 - 主哈希表"]
+        DICT --> HT1["dictht ht1 - 备用哈希表"]
+    end
+    
+    subgraph "哈希表结构 (dictht)"
+        HT0 --> TABLE["dictEntry** table - 桶数组"]
+        HT0 --> SIZE["unsigned long size - 数组大小"]
+        HT0 --> SIZEMASK["unsigned long sizemask - size-1"]
+        HT0 --> USED["unsigned long used - 已用节点数"]
+    end
+    
+    subgraph "桶数组详情"
+        TABLE --> BUCKET0["bucket0"]
+        TABLE --> BUCKET1["bucket1"]
+        TABLE --> BUCKET2["bucket2"]
+        TABLE --> BUCKETN["bucketN"]
+        
+        BUCKET0 --> ENTRY1["dictEntry"]
+        BUCKET1 --> ENTRY2["dictEntry"]
+        BUCKET2 --> ENTRY3["dictEntry"]
+    end
+    
+    subgraph "字典条目结构 (dictEntry)"
+        ENTRY1 --> KEY["void* key - 键"]
+        ENTRY1 --> VAL["union val - 值"]
+        ENTRY1 --> NEXT["dictEntry* next - 链表指针"]
+        
+        VAL --> VALPTR["void* ptr"]
+        VAL --> VALU64["uint64_t u64"]
+        VAL --> VALS64["int64_t s64"]
+        VAL --> VALD["double d"]
+    end
+    
+    style RS fill:#e1f5fe
+    style DB0 fill:#f3e5f5
+    style DICT fill:#e8f5e8
+    style HT0 fill:#fff3e0
+    style ENTRY1 fill:#fce4ec
+```
+
+#### 各层次结构说明
+
+**redisDb（数据库）**：Redis 服务器的单个数据库实例，默认有16个数据库（0-15）
+
+**dict（字典）**：Redis 的核心数据结构，实现键值对的存储和查找
+
+**dictht（哈希表）**：具体的哈希表实现，使用链式哈希解决冲突
+- **主要字段**：
+  - `dictEntry **table`：哈希表数组，每个元素是链表头指针
+  - `unsigned long size`：哈希表大小（必须是2的幂）
+  - `unsigned long sizemask`：哈希表大小掩码，用于计算索引（size-1）
+  - `unsigned long used`：已使用的节点数量
+
+**dictEntry（字典条目）**：存储单个键值对的节点，通过链表解决哈希冲突
+- **主要字段**：
+  - `void *key`：键指针
+  - `union val`：值的联合体，可存储指针、整数或浮点数
+  - `struct dictEntry *next`：指向下一个节点的指针（处理哈希冲突）
+
+### String
 
 **TBD**
 
