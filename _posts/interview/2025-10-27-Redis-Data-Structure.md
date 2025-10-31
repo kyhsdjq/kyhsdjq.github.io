@@ -711,7 +711,7 @@ Zset 相比 Set 多包涵属性 score 用来排序。
 > 同一个消费组里的多个消费者不能消费同一条消息。
 {: .prompt-info }
 
-**Stream** 的实现参考我的 [这篇文章](http://kyhsdjq.github.io/posts/Redis-Stream/)。
+<!-- **Stream** 的实现参考我的 [这篇文章](http://kyhsdjq.github.io/posts/Redis-Stream/)。 -->
 
 **Stream** 解决了 **List** 实现 **消息队列** 的一些问题，整理一下它的优点：
 - 自动维护 **全局 ID**
