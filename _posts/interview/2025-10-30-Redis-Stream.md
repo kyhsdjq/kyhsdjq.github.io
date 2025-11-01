@@ -1,5 +1,5 @@
 ---
-title: "Redis Steam"
+title: "Redis Stream"
 date: 2025-10-30 18:36:00 +0800
 categories: [Interview, Redis]
 tags: [computer science, redis, data structure, message queue]     # TAG names should always be lowercase
