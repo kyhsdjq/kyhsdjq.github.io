@@ -11,7 +11,6 @@ order: 4
 
 **TODO LIST**:
 - favicon 替换为透明背景
-- SillyTavern
 - DeepWiki
 - GitMcp
 - RAG
