@@ -2,7 +2,7 @@
 title: "Java Points"
 date: 2025-11-18 1:50:00 +0800
 categories: [Interview, Java]
-tags: [computer science, java, concurrency]     # TAG names should always be lowercase
+tags: [computer science, java, concurrency, data structure, thread pool]     # TAG names should always be lowercase
 author: kyhsdjq
 description: Summarizing java knowledge points in one sentence.
 media_subpath: /imgs/interview
@@ -195,3 +195,13 @@ terminated（被销毁）
 ### 异常处理
 
 execute 提交：工作线程直接异常结束。submit 提交：捕获异常。
+
+## GC
+
+### full gc
+
+定义：分代gc中对整体整个堆内存回收
+
+触发原因：老年代空间不足（大对象）、元空间溢出（aop代理对象）
+
+避免手段：增大堆内存、增大老年代、更改垃圾回收器、增大新生代（减少晋升）、检查内存泄漏
