@@ -1,11 +1,11 @@
 ---
 title: "Turing Machine #1"
 date: 2024-12-08 03:03:46 +0800
-categories: [Note, Formal Language & Automation, Turing Machine]
-tags: [computer science]     # TAG names should always be lowercase
+categories: [Formal Language & Automation]
+tags: [note, computer science]     # TAG names should always be lowercase
 author: kyhsdjq
 description: Turing machine's extension.
-media_subpath: /imgs/note
+media_subpath: /imgs/formal-language-and-automation
 math: true
 # mermaid: true
 ---

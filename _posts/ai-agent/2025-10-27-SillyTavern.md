@@ -1,11 +1,10 @@
 ---
 title: "SillyTavern"
 date: 2025-10-27 7:23:00 +0800
-categories: [Subject, AI]
-tags: [computer science, ai, prompt engineering]     # TAG names should always be lowercase
+categories: [AI, Prompt Engineering]
+tags: [subject, computer science, ai, prompt engineering]     # TAG names should always be lowercase
 author: kyhsdjq
 description: A single unified interface for many LLM APIs.
-media_subpath: /imgs/subject
 math: true
 mermaid: true
 ---

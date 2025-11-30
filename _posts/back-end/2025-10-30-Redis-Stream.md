@@ -1,11 +1,10 @@
 ---
 title: "Redis Stream"
 date: 2025-10-30 18:36:00 +0800
-categories: [Interview, Redis]
-tags: [computer science, redis, data structure, message queue]     # TAG names should always be lowercase
+categories: [Back End, Redis]
+tags: [interview, computer science, redis, data structure, message queue]     # TAG names should always be lowercase
 author: kyhsdjq
 description: Introduction to redis stream and how it works.
-media_subpath: /imgs/interview
 math: true
 mermaid: true
 ---

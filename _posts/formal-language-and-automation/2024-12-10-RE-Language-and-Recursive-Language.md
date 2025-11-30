@@ -1,11 +1,11 @@
 ---
 title: "Turing Machine #2"
 date: 2024-12-10 02:37:40 +0800
-categories: [Note, Formal Language & Automation, Turing Machine]
-tags: [computer science]     # TAG names should always be lowercase
+categories: [Formal Language & Automation]
+tags: [note, computer science]     # TAG names should always be lowercase
 author: kyhsdjq
 description: RE language's and recursive language's closure properties.
-media_subpath: /imgs/note
+media_subpath: /imgs/formal-language-and-automation
 math: true
 # mermaid: true
 ---

@@ -1,11 +1,10 @@
 ---
 title: "Rate Limiting"
 date: 2025-11-11 4:32:00 +0800
-categories: [Note, Microservices]
-tags: [computer science, back end, microservices, distributed system]     # TAG names should always be lowercase
+categories: [Back End, Microservices]
+tags: [note, computer science, back end, microservices, distributed system]     # TAG names should always be lowercase
 author: kyhsdjq
 description: Ways to implement rate limiting.
-media_subpath: /imgs/note
 math: true
 mermaid: true
 ---

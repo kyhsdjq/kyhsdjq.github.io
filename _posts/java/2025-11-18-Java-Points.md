@@ -1,11 +1,10 @@
 ---
 title: "Java Points"
 date: 2025-11-18 1:50:00 +0800
-categories: [Interview, Java]
-tags: [computer science, java, concurrency, data structure, thread pool]     # TAG names should always be lowercase
+categories: [Java]
+tags: [interview, computer science, java, concurrency, data structure, thread pool]     # TAG names should always be lowercase
 author: kyhsdjq
 description: Summarizing java knowledge points in one sentence.
-media_subpath: /imgs/interview
 math: true
 mermaid: true
 ---

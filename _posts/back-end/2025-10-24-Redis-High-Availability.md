@@ -1,11 +1,10 @@
 ---
 title: "Redis High Availability"
 date: 2025-10-24 1:59:00 +0800
-categories: [Interview, Redis]
-tags: [computer science, redis, distributed system]     # TAG names should always be lowercase
+categories: [Back End, Redis]
+tags: [interview, computer science, redis, distributed system]     # TAG names should always be lowercase
 author: kyhsdjq
 description: A Comprehensive Guide to Master-Slave Replication and Cluster Architecture.
-media_subpath: /imgs/interview
 math: true
 mermaid: true
 ---

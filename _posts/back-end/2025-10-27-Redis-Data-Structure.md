@@ -1,11 +1,10 @@
 ---
 title: "Redis Data Structure"
 date: 2025-10-27 22:28:00 +0800
-categories: [Interview, Redis]
-tags: [computer science, redis, data structure]     # TAG names should always be lowercase
+categories: [Back End, Redis]
+tags: [interview, computer science, redis, data structure]     # TAG names should always be lowercase
 author: kyhsdjq
 description: A comprehensive guide to Redis internal data structures and implementation details.
-media_subpath: /imgs/interview
 math: true
 mermaid: true
 ---

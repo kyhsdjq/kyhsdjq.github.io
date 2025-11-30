@@ -1,11 +1,10 @@
 ---
 title: "Redis Memory Management"
 date: 2025-10-22 5:16:00 +0800
-categories: [Interview, Redis]
-tags: [computer science, redis, distributed system]     # TAG names should always be lowercase
+categories: [Back End, Redis]
+tags: [interview, computer science, redis, distributed system]     # TAG names should always be lowercase
 author: kyhsdjq
 description: Comprehensive guide to Redis memory management, covering expiration policies, eviction strategies, LRU/LFU algorithms, and cache consistency solutions.
-media_subpath: /imgs/interview
 math: true
 mermaid: true
 ---
