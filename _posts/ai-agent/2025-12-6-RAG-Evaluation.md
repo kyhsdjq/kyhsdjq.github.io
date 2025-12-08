@@ -77,10 +77,12 @@ RAG 系统的评估可以拆分于以下四块：
     - Reasoning: a short explanation of why you chose the winner with respect to the measure described above.
     
     Format your response as a JSON object with the following structure:
+{% raw %}
     {{
         "winner": <1, 2, or 0>,
         "reasoning": "Answer 1 is better because <your reasoning>."
     }}
+{% endraw %}
     
     ---Question---
     
