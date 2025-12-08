@@ -5,7 +5,7 @@ categories: [Formal Language & Automation]
 tags: [note, computer science]     # TAG names should always be lowercase
 author: kyhsdjq
 description: Turing machine's definition and basic properties.
-media_subpath: /imgs/formal-language-and-automation
+media_subpath: /imgs/turing-machine
 math: true
 # mermaid: true
 ---

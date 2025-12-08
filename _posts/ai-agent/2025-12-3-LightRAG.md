@@ -5,7 +5,7 @@ categories: [AI, AI Agent]
 tags: [subject, computer science, ai, ai agent, rag]     # TAG names should always be lowercase
 author: kyhsdjq
 description: RAG indexed with a graph.
-media_subpath: /imgs/ai-agent
+media_subpath: /imgs/lightrag
 math: true
 mermaid: true
 ---
@@ -67,5 +67,41 @@ Retrieval 过程：
 - Indexing：建图时，依赖 LLM 提取出点和边并总结
 ![LightRAG Indexing Prompt](lightrag-indexing-prompt.png){: w="1000" }
 - Retrieval：从原始 query 中提取出 local keyword 和 global keyword
-![LightRAG Retrieval Promtp](lightrag-retrieval-prompt.png){: w="1000" }
+![LightRAG Retrieval Promtpt](lightrag-retrieval-prompt.png){: w="1000" }
+
+## 评估
+
+### 评估方式
+
+- Dataset：UltraDomain 中的 Agriculture，CS，Legal，MIX 数据库
+- Question：综合文档内容放入上下文，要求 LLM 生成多个角色及其对应的任务，最后根据每个角色-任务对生成多个提问，prompt 如下：
+![LightRAG Question Generation Prompt](lightrag-question-generation-prompt.png){: w="1000" }
+- Baseline：
+    - Naive RAG：经典的 RAG 实现，采用 chunk 和 vector database
+    - RQ-RAG：将 query 拆分多个 sub-queries，包括重写、拆解和去歧义
+    - HyDE：根据 query 生成一篇虚拟文档
+    - GraphRAG：生成图，在其上构建 communitie report 作为抽象总结
+- Rate：通过 LLM 比较一对回答，不展示原文，从 Comprehensiveness、Diversity、Empowerment 三个角度比较，最后给出综合表现评估 Overall，prompt 如下：
+![LightRAG Rate Prompt](lightrag-rate-prompt.png){: w="1000" }
+
+### 综合表现
+
+- 数据集越大、问题越复杂，基于图的 RAG（GraphRAG、LightRAG）优势越大。
+- LightRAG 因为其双层检索模式在 Diversity（提供多种角度的见解）上表现极佳，尤其在复杂上下文的场景下相比 GraphRAG 有更大优势。
+
+### 消融实验
+
+为证明双层检索的有效性，将 LightRAG 中分别删除 High、Low、Origin 层，再和 NaiveRAG 比较：
+- 删去 High 或 Low 层均导致效果显著下降，证明双层检索的贡献
+- 删去 Origin 层（即原始文本）效果没有下降，表明图有效提取了原始文本中的信息，提供了足够的上下文
+
+### tokens 与 API calls
+
+只和效果较好的 GraphRAG 比较：
+- Indexing：GraphRAG 需要生成 610 个二级节点，每个平均消耗 1000 tokens。这个过程中需要多次 API calls，产生的 overhead 也不可忽略。<br>
+而 LightRAG 只需要 < 100 tokens，单次 API call 即可完成。
+- Data Update：GraphRAG 需要完全重构，至少多花 1399 * 2 * 5000 tokens。
+
+
+
 
