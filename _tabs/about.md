@@ -10,7 +10,6 @@ order: 4
 - AI Agent
 
 **TODO LIST**:
-- favicon 替换为透明背景
 - DeepWiki
 - GitMcp
 - raft
