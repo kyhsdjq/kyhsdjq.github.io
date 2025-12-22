@@ -102,6 +102,9 @@ Retrieval 过程：
 而 LightRAG 只需要 < 100 tokens，单次 API call 即可完成。
 - Data Update：GraphRAG 需要完全重构，至少多花 1399 * 2 * 5000 tokens。
 
+## 参考文献
 
+1. Zirui Guo, Lianghao Xia, Yanhua Yu, Tu Ao, Chao Huang. "**LightRAG: Simple and Fast Retrieval-Augmented Generation.**" *arXiv preprint arXiv:2410.05779v3* (2025). [\[Paper\]](https://arxiv.org/abs/2410.05779)
+{: .bib }
 
 

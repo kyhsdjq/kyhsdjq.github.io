@@ -116,3 +116,12 @@ RAG 系统的评估可以拆分于以下四块：
 
 通过 LLM 处理后再计算客观指标
 - （GraphRAG）通过 [Claimfy](https://arxiv.org/abs/2502.10855) 提取陈述，然后评估结果的 Comprehensiveness 和 Diversity
+
+## 参考文献
+
+1. Yunfan Gao, Yun Xiong, Xinyu Gao, Kangxiang Jia, Jinliu Pan, Yuxi Bi, Yi Dai, Jiawei Sun, Meng Wang, Haofen Wang. "**Retrieval-Augmented Generation for Large Language Models: A Survey.**" *arXiv preprint arXiv:2312.10997v5* (2024). [\[Paper\]](https://arxiv.org/abs/2312.10997)
+2. Luyu Gao, Xueguang Ma, Jimmy Lin, Jamie Callan. "**Precise Zero-Shot Dense Retrieval without Relevance Labels.**" *arXiv preprint arXiv:2212.10496v1* (2022). [\[Paper\]](https://arxiv.org/abs/2212.10496)
+3. Chi-Min Chan, Chunpu Xu, Ruibin Yuan, Hongyin Luo, Wei Xue, Yike Guo, Jie Fu. "**RQ-RAG: Learning to Refine Queries for Retrieval Augmented Generation.**" *arXiv preprint arXiv:2404.00610v1* (2024). [\[Paper\]](https://arxiv.org/abs/2404.00610)
+4. Darren Edge, Ha Trinh, Newman Cheng, Joshua Bradley, Alex Chao, Apurva Mody, Steven Truitt, Dasha Metropolitansky, Robert Osazuwa Ness, Jonathan Larson. "**From Local to Global: A Graph RAG Approach to Query-Focused Summarization.**" *arXiv preprint arXiv:2404.16130v2* (2025). [\[Paper\]](https://arxiv.org/abs/2404.16130)
+5. Zirui Guo, Lianghao Xia, Yanhua Yu, Tu Ao, Chao Huang. "**LightRAG: Simple and Fast Retrieval-Augmented Generation.**" *arXiv preprint arXiv:2410.05779v3* (2025). [\[Paper\]](https://arxiv.org/abs/2410.05779)
+{: .bib}

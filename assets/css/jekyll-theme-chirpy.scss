@@ -9,3 +9,27 @@
 ';
 
 /* append your custom style below */
+
+/* Custom Bibliography List Style */
+ol.bib {
+  list-style-type: none;
+  counter-reset: bib-counter;
+  padding-left: 0;
+}
+
+ol.bib li {
+  counter-increment: bib-counter;
+  position: relative;
+  margin-bottom: 0.5rem;
+  padding-left: 2.5rem;
+}
+
+ol.bib li::before {
+  content: "[" counter(bib-counter) "]";
+  position: absolute;
+  left: 0;
+  width: 2rem;
+  text-align: right;
+  color: var(--text-color); /* Use theme variable if possible, or inherit */
+  font-weight: bold;
+}
