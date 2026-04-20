@@ -1,0 +1,144 @@
+{% assign live2d = site.data.live2d %}
+{% if live2d and live2d.enabled and live2d.model_path %}
+  <script>
+    (() => {
+      const config = {
+        modelPath: {{ live2d.model_path | relative_url | jsonify }},
+        waifuPath: {{ '/assets/live2d/waifu-tips.json' | relative_url | jsonify }},
+        waifuScript: {{ '/assets/live2d/waifu-tips.js' | relative_url | jsonify }},
+        waifuStyle: {{ '/assets/live2d/waifu.css' | relative_url | jsonify }},
+        cubism2Path: {{ '/assets/live2d/live2d.min.js' | relative_url | jsonify }},
+        cubism5Path: 'https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js',
+        tools: {{ live2d.tools | jsonify }},
+        drag: {{ live2d.drag | default: false | jsonify }},
+        logLevel: {{ live2d.log_level | default: 'warn' | jsonify }},
+        mobileEnabled: {{ live2d.mobile.enabled | default: false | jsonify }},
+        mobileMaxWidth: {{ live2d.mobile.max_width | default: 768 }}
+      };
+
+      const ensureStyle = (href) => {
+        if (document.querySelector(`link[data-live2d-style="${href}"]`)) {
+          return;
+        }
+
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = href;
+        link.dataset.live2dStyle = href;
+        document.head.appendChild(link);
+      };
+
+      const ensureOverrides = () => {
+        if (document.getElementById('live2d-overrides')) {
+          return;
+        }
+
+        const style = document.createElement('style');
+        style.id = 'live2d-overrides';
+        style.textContent = `
+          #waifu:hover {
+            transform: translateY(25px) !important;
+          }
+
+          #waifu-tips {
+            display: none !important;
+          }
+        `;
+        document.head.appendChild(style);
+      };
+
+      const loadScript = (src) =>
+        new Promise((resolve, reject) => {
+          const existing = document.querySelector(`script[data-live2d-script="${src}"]`);
+          if (existing) {
+            if (window.initWidget) {
+              resolve();
+            } else {
+              existing.addEventListener('load', () => resolve(), { once: true });
+              existing.addEventListener('error', () => reject(new Error(`Failed to load ${src}`)), {
+                once: true
+              });
+            }
+            return;
+          }
+
+          const script = document.createElement('script');
+          script.src = src;
+          script.type = 'module';
+          script.dataset.live2dScript = src;
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error(`Failed to load ${src}`));
+          document.body.appendChild(script);
+        });
+
+      const installReopenFix = () => {
+        if (window.__live2dReopenFixInstalled) {
+          return;
+        }
+
+        window.__live2dReopenFixInstalled = true;
+        let teardownTimer = null;
+
+        document.addEventListener(
+          'click',
+          (event) => {
+            const target = event.target;
+            if (!(target instanceof Element) || !target.closest('#waifu-tool-quit')) {
+              return;
+            }
+
+            if (teardownTimer) {
+              window.clearTimeout(teardownTimer);
+            }
+
+            teardownTimer = window.setTimeout(() => {
+              document.getElementById('waifu')?.remove();
+              document.getElementById('waifu-toggle')?.setAttribute('first-time', 'true');
+              teardownTimer = null;
+            }, 3100);
+          },
+          true
+        );
+      };
+
+      const shouldSkip = () => !config.mobileEnabled && window.innerWidth <= config.mobileMaxWidth;
+
+      const start = async () => {
+        if (shouldSkip()) {
+          return;
+        }
+
+        try {
+          const response = await fetch(config.modelPath, { cache: 'no-store' });
+          if (!response.ok) {
+            return;
+          }
+
+          ensureStyle(config.waifuStyle);
+          ensureOverrides();
+          await loadScript(config.waifuScript);
+          installReopenFix();
+
+          if (window.initWidget && !document.getElementById('waifu-toggle')) {
+            window.initWidget({
+              waifuPath: config.waifuPath,
+              cubism2Path: config.cubism2Path,
+              cubism5Path: config.cubism5Path,
+              tools: config.tools,
+              drag: config.drag,
+              logLevel: config.logLevel
+            });
+          }
+        } catch (error) {
+          console.warn('Live2D widget was not initialized.', error);
+        }
+      };
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start, { once: true });
+      } else {
+        start();
+      }
+    })();
+  </script>
+{% endif %}

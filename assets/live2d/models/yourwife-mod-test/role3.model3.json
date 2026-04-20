@@ -1,0 +1,29 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "role3.moc3",
+		"Textures": [
+			"role3.4096/texture_00.png",
+			"role3.4096/texture_01.png",
+			"role3.4096/texture_02.png"
+		],
+		"Physics": "role3.physics3.json",
+		"DisplayInfo": "role3.cdi3.json",
+		"MotionSync": "role3.motionsync3.json"
+	},
+	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "EyeBlink",
+			"Ids": []
+		},
+		{
+			"Target": "Parameter",
+			"Name": "LipSync",
+			"Ids": [
+				"ParamMouthForm",
+				"ParamMouthOpenY"
+			]
+		}
+	]
+}

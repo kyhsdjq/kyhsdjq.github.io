@@ -1,0 +1,11 @@
+enabled: true
+model_name: yourwife-mod-test
+model_path: /assets/live2d/models/yourwife-mod-test/role3.model3.json
+welcome_message: 来和我一起逛逛这座博客吧。
+mobile:
+  enabled: false
+  max_width: 768
+tools:
+  - quit
+drag: false
+log_level: warn

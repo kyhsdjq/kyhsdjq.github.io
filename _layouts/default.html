@@ -81,6 +81,8 @@ layout: compress
       {% include {{ _include_path }} %}
     {% endfor %}
 
+    {% include live2d.html %}
+
     {% include_cached search-loader.html lang=lang %}
   </body>
 </html>

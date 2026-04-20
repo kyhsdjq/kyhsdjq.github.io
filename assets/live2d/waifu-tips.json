@@ -1,0 +1,85 @@
+---
+---
+{
+  "mouseover": [
+    {
+      "selector": "#avatar",
+      "text": ["这是博客头像。", "点一下可以回到首页。"]
+    },
+    {
+      "selector": "#sidebar .nav-link",
+      "text": ["去 <span>{text}</span> 看看吧。", "点这里可以继续逛博客。"]
+    },
+    {
+      "selector": "#search-trigger",
+      "text": ["找东西的话，可以试试搜索。", "想找哪篇文章？"]
+    },
+    {
+      "selector": "#mode-toggle",
+      "text": ["这里可以切换明暗主题。"]
+    },
+    {
+      "selector": "#topbar-title",
+      "text": ["现在看到的是 <span>{text}</span> 页面。"]
+    },
+    {
+      "selector": "#back-to-top",
+      "text": ["点一下就能回到顶部。"]
+    },
+    {
+      "selector": ".post-navigation a, .pagination .page-link",
+      "text": ["继续翻翻看吧。", "也许下一页就有你想看的内容。"]
+    },
+    {
+      "selector": "article a[href], main a[href]",
+      "text": ["要去看看 <span>{text}</span> 吗？"]
+    }
+  ],
+  "click": [
+    {
+      "selector": "#search-trigger",
+      "text": ["搜索框已经打开啦。"]
+    }
+  ],
+  "seasons": [],
+  "time": [
+    {
+      "hour": "6-11",
+      "text": "早上好，今天也来读点有趣的内容吧。"
+    },
+    {
+      "hour": "12-17",
+      "text": "下午好，欢迎回来。"
+    },
+    {
+      "hour": "18-23",
+      "text": "晚上好，来挑一篇文章慢慢看吧。"
+    },
+    {
+      "hour": "0-5",
+      "text": "这么晚还没睡呀，注意休息。"
+    }
+  ],
+  "message": {
+    "default": ["嗨，欢迎来到这里。", "点点我旁边的按钮，也许会有惊喜。"],
+    "console": "控制台也被你发现了。",
+    "copy": "记得注明文章来源哦。",
+    "visibilitychange": "你回来啦。",
+    "changeSuccess": "新衣服还不错吧？",
+    "changeFail": "暂时没有更多可切换的外观。",
+    "photo": "拍得好看吗？",
+    "goodbye": "那就先说再见啦。",
+    "hitokoto": "这句一言来自 <span>「$1」</span>，由 <span>$2</span> 投稿。",
+    "welcome": "欢迎阅读 <span>「$1」</span>",
+    "referrer": "Hello，来自 <span>$1</span> 的朋友",
+    "hoverBody": ["不要一直戳我啦。", "我会害羞的。"],
+    "tapBody": ["怎么突然摸我一下？", "喂喂，我在认真看博客呢。"]
+  },
+  "models": [
+    {
+      "name": {{ site.data.live2d.model_name | jsonify }},
+      "paths": [{{ site.data.live2d.model_path | relative_url | jsonify }}],
+      "message": {{ site.data.live2d.welcome_message | jsonify }}
+    }
+  ]
+}
