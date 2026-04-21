@@ -107,7 +107,15 @@ function loadScript(src) {
 
 class Live2DManager {
   constructor(config) {
-    this.config = config;
+    const normalizedScale = Number(config.scale);
+    const normalizedOffsetX = Number(config.offsetX);
+    const normalizedOffsetY = Number(config.offsetY);
+    this.config = {
+      ...config,
+      scale: Number.isFinite(normalizedScale) && normalizedScale > 0 ? normalizedScale : 1,
+      offsetX: Number.isFinite(normalizedOffsetX) ? normalizedOffsetX : 0,
+      offsetY: Number.isFinite(normalizedOffsetY) ? normalizedOffsetY : 0
+    };
     this.cubism2Model = null;
     this.cubism5Model = null;
     this.currentModelVersion = 0;
@@ -189,10 +197,20 @@ class Live2DManager {
 
     if (this.currentModelVersion === 2 || !this.cubism5Model.subdelegates.at(0)) {
       this.cubism5Model.initialize();
-      this.cubism5Model.changeModel(this.config.modelPath);
+      this.cubism5Model.changeModel(
+        this.config.modelPath,
+        this.config.scale,
+        this.config.offsetX,
+        this.config.offsetY
+      );
       this.cubism5Model.run();
     } else {
-      this.cubism5Model.changeModel(this.config.modelPath);
+      this.cubism5Model.changeModel(
+        this.config.modelPath,
+        this.config.scale,
+        this.config.offsetX,
+        this.config.offsetY
+      );
     }
   }
 

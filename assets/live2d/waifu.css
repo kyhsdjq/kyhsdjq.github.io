@@ -16,6 +16,7 @@
 	position: fixed;
 	transition: margin-right 1s;
 	width: 60px;
+	z-index: 2147483647;
 }
 
 #waifu-toggle.waifu-toggle-active {
@@ -37,7 +38,7 @@
 	position: fixed;
 	transform: translateY(25px);
 	transition: transform .3s ease-in-out, bottom 3s ease-in-out;
-	z-index: 1;
+	z-index: 2147483647;
 }
 
 #waifu.waifu-active {

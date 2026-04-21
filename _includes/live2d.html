@@ -8,6 +8,9 @@
       "cubism2Path": {{ '/assets/live2d/live2d.min.js' | relative_url | jsonify }},
       "cubism5Path": "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js",
       "tools": {{ live2d.tools | jsonify }},
+      "scale": {{ live2d.scale | default: 1 | jsonify }},
+      "offsetX": {{ live2d.offset_x | default: 0 | jsonify }},
+      "offsetY": {{ live2d.offset_y | default: 0 | jsonify }},
       "drag": {{ live2d.drag | default: false | jsonify }},
       "logLevel": {{ live2d.log_level | default: 'warn' | jsonify }},
       "mobileEnabled": {{ live2d.mobile.enabled | default: false | jsonify }},
@@ -81,6 +84,9 @@
               cubism2Path: config.cubism2Path,
               cubism5Path: config.cubism5Path,
               tools: config.tools,
+              scale: config.scale,
+              offsetX: config.offsetX,
+              offsetY: config.offsetY,
               drag: config.drag,
               logLevel: config.logLevel
             });
