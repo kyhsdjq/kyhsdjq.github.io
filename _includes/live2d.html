@@ -4,8 +4,7 @@
     (() => {
       const config = {
         modelPath: {{ live2d.model_path | relative_url | jsonify }},
-        waifuPath: {{ '/assets/live2d/waifu-tips.json' | relative_url | jsonify }},
-        waifuScript: {{ '/assets/live2d/waifu-tips.js' | relative_url | jsonify }},
+        waifuScript: {{ '/assets/live2d/waifu-core.js' | relative_url | jsonify }},
         waifuStyle: {{ '/assets/live2d/waifu.css' | relative_url | jsonify }},
         cubism2Path: {{ '/assets/live2d/live2d.min.js' | relative_url | jsonify }},
         cubism5Path: 'https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js',
@@ -26,25 +25,6 @@
         link.href = href;
         link.dataset.live2dStyle = href;
         document.head.appendChild(link);
-      };
-
-      const ensureOverrides = () => {
-        if (document.getElementById('live2d-overrides')) {
-          return;
-        }
-
-        const style = document.createElement('style');
-        style.id = 'live2d-overrides';
-        style.textContent = `
-          #waifu:hover {
-            transform: translateY(25px) !important;
-          }
-
-          #waifu-tips {
-            display: none !important;
-          }
-        `;
-        document.head.appendChild(style);
       };
 
       const loadScript = (src) =>
@@ -71,36 +51,6 @@
           document.body.appendChild(script);
         });
 
-      const installReopenFix = () => {
-        if (window.__live2dReopenFixInstalled) {
-          return;
-        }
-
-        window.__live2dReopenFixInstalled = true;
-        let teardownTimer = null;
-
-        document.addEventListener(
-          'click',
-          (event) => {
-            const target = event.target;
-            if (!(target instanceof Element) || !target.closest('#waifu-tool-quit')) {
-              return;
-            }
-
-            if (teardownTimer) {
-              window.clearTimeout(teardownTimer);
-            }
-
-            teardownTimer = window.setTimeout(() => {
-              document.getElementById('waifu')?.remove();
-              document.getElementById('waifu-toggle')?.setAttribute('first-time', 'true');
-              teardownTimer = null;
-            }, 3100);
-          },
-          true
-        );
-      };
-
       const shouldSkip = () => !config.mobileEnabled && window.innerWidth <= config.mobileMaxWidth;
 
       const start = async () => {
@@ -115,13 +65,11 @@
           }
 
           ensureStyle(config.waifuStyle);
-          ensureOverrides();
           await loadScript(config.waifuScript);
-          installReopenFix();
 
           if (window.initWidget && !document.getElementById('waifu-toggle')) {
             window.initWidget({
-              waifuPath: config.waifuPath,
+              modelPath: config.modelPath,
               cubism2Path: config.cubism2Path,
               cubism5Path: config.cubism5Path,
               tools: config.tools,

@@ -43,10 +43,6 @@
 	display: none;
 }
 
-#waifu:hover {
-	transform: translateY(20px);
-}
-
 #waifu-tips {
 	animation: waifu-shake 50s ease-in-out 5s infinite;
 	background-color: rgba(236, 217, 188, .5);
@@ -77,14 +73,14 @@
 }
 
 #live2d {
-	cursor: grab;
+	cursor: default;
 	height: 300px;
 	position: relative;
 	width: 300px;
 }
 
 #live2d:active {
-	cursor: grabbing;
+	cursor: default;
 }
 
 #waifu-tool {
