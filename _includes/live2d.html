@@ -1,19 +1,27 @@
 {% assign live2d = site.data.live2d %}
 {% if live2d and live2d.enabled and live2d.model_path %}
+  <script id="live2d-config" type="application/json">
+    {
+      "modelPath": {{ live2d.model_path | relative_url | jsonify }},
+      "waifuScript": {{ '/assets/live2d/waifu-core.js' | relative_url | jsonify }},
+      "waifuStyle": {{ '/assets/live2d/waifu.css' | relative_url | jsonify }},
+      "cubism2Path": {{ '/assets/live2d/live2d.min.js' | relative_url | jsonify }},
+      "cubism5Path": "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js",
+      "tools": {{ live2d.tools | jsonify }},
+      "drag": {{ live2d.drag | default: false | jsonify }},
+      "logLevel": {{ live2d.log_level | default: 'warn' | jsonify }},
+      "mobileEnabled": {{ live2d.mobile.enabled | default: false | jsonify }},
+      "mobileMaxWidth": {{ live2d.mobile.max_width | default: 768 | jsonify }}
+    }
+  </script>
   <script>
     (() => {
-      const config = {
-        modelPath: {{ live2d.model_path | relative_url | jsonify }},
-        waifuScript: {{ '/assets/live2d/waifu-core.js' | relative_url | jsonify }},
-        waifuStyle: {{ '/assets/live2d/waifu.css' | relative_url | jsonify }},
-        cubism2Path: {{ '/assets/live2d/live2d.min.js' | relative_url | jsonify }},
-        cubism5Path: 'https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js',
-        tools: {{ live2d.tools | jsonify }},
-        drag: {{ live2d.drag | default: false | jsonify }},
-        logLevel: {{ live2d.log_level | default: 'warn' | jsonify }},
-        mobileEnabled: {{ live2d.mobile.enabled | default: false | jsonify }},
-        mobileMaxWidth: {{ live2d.mobile.max_width | default: 768 }}
-      };
+      const configElement = document.getElementById('live2d-config');
+      if (!configElement?.textContent) {
+        return;
+      }
+
+      const config = JSON.parse(configElement.textContent);
 
       const ensureStyle = (href) => {
         if (document.querySelector(`link[data-live2d-style="${href}"]`)) {

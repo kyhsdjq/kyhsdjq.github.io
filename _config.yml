@@ -205,6 +205,9 @@ compress_html:
   ignore:
     envs: [development]
 
+include:
+  - .well-known
+
 exclude:
   - "*.gem"
   - "*.gemspec"
