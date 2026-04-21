@@ -1,3 +1,8 @@
+#waifu-toggle,
+#waifu {
+	--waifu-right-offset: 17px;
+}
+
 #waifu-toggle {
 	background-color: #fa0;
 	border-radius: 5px;
@@ -5,7 +10,7 @@
 	cursor: pointer;
 	display: flex;
 	justify-content: flex-start;
-	right: 0;
+	right: var(--waifu-right-offset);
 	margin-right: -100px;
 	padding: 5px;
 	position: fixed;
@@ -28,7 +33,7 @@
 
 #waifu {
 	bottom: -500px;
-	right: 0;
+	right: var(--waifu-right-offset);
 	position: fixed;
 	transform: translateY(25px);
 	transition: transform .3s ease-in-out, bottom 3s ease-in-out;

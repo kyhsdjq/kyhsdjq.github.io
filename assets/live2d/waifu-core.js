@@ -7,10 +7,85 @@ const ICONS = {
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>'
 };
 
+let hideWaifuTimeoutId = null;
+let hideWaifuTransitionCleanup = null;
+let dragResizeCleanup = null;
+let currentManager = null;
+
+function clearHideWaifuTimeout() {
+  if (hideWaifuTimeoutId !== null) {
+    window.clearTimeout(hideWaifuTimeoutId);
+    hideWaifuTimeoutId = null;
+  }
+
+  if (hideWaifuTransitionCleanup) {
+    hideWaifuTransitionCleanup();
+    hideWaifuTransitionCleanup = null;
+  }
+}
+
+function scheduleHideWaifu(waifu, toggle) {
+  clearHideWaifuTimeout();
+
+  const finishHide = () => {
+    if (hideWaifuTransitionCleanup) {
+      hideWaifuTransitionCleanup();
+      hideWaifuTransitionCleanup = null;
+    }
+
+    if (hideWaifuTimeoutId !== null) {
+      window.clearTimeout(hideWaifuTimeoutId);
+      hideWaifuTimeoutId = null;
+    }
+
+    if (waifu?.classList.contains('waifu-active')) {
+      return;
+    }
+
+    waifu?.classList.add('waifu-hidden');
+    toggle?.classList.add('waifu-toggle-active');
+  };
+
+  const handleTransitionEnd = (event) => {
+    if (event.target !== waifu || event.propertyName !== 'bottom') {
+      return;
+    }
+
+    finishHide();
+  };
+
+  waifu?.addEventListener('transitionend', handleTransitionEnd);
+  hideWaifuTransitionCleanup = () => {
+    waifu?.removeEventListener('transitionend', handleTransitionEnd);
+  };
+
+  // Fallback in case transitionend does not fire.
+  hideWaifuTimeoutId = window.setTimeout(finishHide, 3200);
+}
+
+function clearDragHandlers() {
+  document.onmousemove = null;
+  document.onmouseup = null;
+
+  if (dragResizeCleanup) {
+    dragResizeCleanup();
+    dragResizeCleanup = null;
+  }
+}
+
+function destroyCurrentManager() {
+  currentManager = null;
+}
+
 function loadScript(src) {
   return new Promise((resolve, reject) => {
     const existing = document.querySelector(`script[data-live2d-runtime="${src}"]`);
     if (existing) {
+      if (existing.dataset.live2dRuntimeLoaded === 'true') {
+        resolve();
+        return;
+      }
+
       existing.addEventListener('load', () => resolve(), { once: true });
       existing.addEventListener('error', () => reject(new Error(`Failed to load ${src}`)), {
         once: true
@@ -21,7 +96,10 @@ function loadScript(src) {
     const script = document.createElement('script');
     script.src = src;
     script.dataset.live2dRuntime = src;
-    script.onload = () => resolve();
+    script.onload = () => {
+      script.dataset.live2dRuntimeLoaded = 'true';
+      resolve();
+    };
     script.onerror = () => reject(new Error(`Failed to load ${src}`));
     document.head.appendChild(script);
   });
@@ -117,9 +195,22 @@ class Live2DManager {
       this.cubism5Model.changeModel(this.config.modelPath);
     }
   }
+
+  destroy() {
+    this.cubism2Model?.destroy?.();
+    this.cubism2Model = null;
+
+    this.cubism5Model?.release?.();
+    this.cubism5Model = null;
+
+    this.currentModelVersion = 0;
+    this.loading = false;
+  }
 }
 
 function installDrag() {
+  clearDragHandlers();
+
   const waifu = document.getElementById('waifu');
   const canvas = document.getElementById('live2d');
 
@@ -163,10 +254,15 @@ function installDrag() {
     };
   });
 
-  window.addEventListener('resize', () => {
+  const handleResize = () => {
     viewportWidth = window.innerWidth;
     viewportHeight = window.innerHeight;
-  });
+  };
+
+  window.addEventListener('resize', handleResize);
+  dragResizeCleanup = () => {
+    window.removeEventListener('resize', handleResize);
+  };
 }
 
 function registerTools(config) {
@@ -195,10 +291,7 @@ function registerTools(config) {
       const toggle = document.getElementById('waifu-toggle');
       localStorage.setItem('waifu-display', Date.now().toString());
       waifu?.classList.remove('waifu-active');
-      window.setTimeout(() => {
-        waifu?.classList.add('waifu-hidden');
-        toggle?.classList.add('waifu-toggle-active');
-      }, 300);
+      scheduleHideWaifu(waifu, toggle);
     }
   };
 
@@ -230,17 +323,16 @@ function ensureToggle() {
 }
 
 async function mountWaifu(config) {
-  let waifu = document.getElementById('waifu');
+  clearHideWaifuTimeout();
+  clearDragHandlers();
+  destroyCurrentManager();
+  document.getElementById('waifu')?.remove();
 
-  if (!waifu) {
-    document.body.insertAdjacentHTML(
-      'beforeend',
-      '<div id="waifu"><div id="waifu-canvas"><canvas id="live2d" width="800" height="800"></canvas></div><div id="waifu-tool"></div></div>'
-    );
-    waifu = document.getElementById('waifu');
-  } else {
-    waifu.classList.remove('waifu-hidden');
-  }
+  document.body.insertAdjacentHTML(
+    'beforeend',
+    '<div id="waifu"><div id="waifu-canvas"><canvas id="live2d" width="800" height="800"></canvas></div><div id="waifu-tool"></div></div>'
+  );
+  const waifu = document.getElementById('waifu');
 
   const toolContainer = document.getElementById('waifu-tool');
   if (toolContainer) {
@@ -249,8 +341,8 @@ async function mountWaifu(config) {
 
   registerTools(config);
 
-  const manager = new Live2DManager(config);
-  await manager.loadModel();
+  currentManager = new Live2DManager(config);
+  await currentManager.loadModel();
 
   if (config.drag) {
     installDrag();
