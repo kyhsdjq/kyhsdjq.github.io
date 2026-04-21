@@ -302,7 +302,7 @@ function registerTools(config) {
       link.click();
     },
     info() {
-      window.open('https://github.com/stevenjoezhang/live2d-widget', '_blank', 'noopener,noreferrer');
+      window.open('https://steamcommunity.com/sharedfiles/filedetails/?id=3575069170', '_blank', 'noopener,noreferrer');
     },
     quit() {
       const waifu = document.getElementById('waifu');
