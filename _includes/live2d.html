@@ -6,7 +6,7 @@
       "waifuScript": {{ '/assets/live2d/waifu-core.js' | relative_url | jsonify }},
       "waifuStyle": {{ '/assets/live2d/waifu.css' | relative_url | jsonify }},
       "cubism2Path": {{ '/assets/live2d/live2d.min.js' | relative_url | jsonify }},
-      "cubism5Path": "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js",
+      "cubism5Path": {{ '/assets/live2d/live2dcubismcore.min.js' | relative_url | jsonify }},
       "tools": {{ live2d.tools | jsonify }},
       "scale": {{ live2d.scale | default: 1 | jsonify }},
       "offsetX": {{ live2d.offset_x | default: 0 | jsonify }},
